@@ -7,8 +7,10 @@ app.use(express.json());
 
 app.get("/", (req, res) => res.send("API is running"));
 
+const auth = require("./middleware/auth");
+
 const employeeRoutes = require("./routes/employees");
-app.use("/api/employees", employeeRoutes);
+app.use("/api/employees", auth, employeeRoutes);
 
 const departmentRoutes = require("./routes/departments");
 app.use("/api/departments", departmentRoutes);
