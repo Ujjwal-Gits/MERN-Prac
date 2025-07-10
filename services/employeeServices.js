@@ -1,53 +1,55 @@
-const Employee = require("../models/Employee");
-
 const CreateEmployeeService = async (newUserData) => {
-  const newEmployee = new Employee(newUserData);
-  await newEmployee.save();
-  return newEmployee;
-};
+  let newEmployee;
+  try {
+    // Step 1: Create Employee
+    newEmployee = new Employee(newUserData);
+    await newEmployee.save();
+  } catch (err) {
+    console.error("Failed to create employee:", err.message);
+    throw new Error("Employee creation failed: " + err.message);
+  }
 
-const GetAllEmployeeService = async () => {
-  //   const allEmployee = await Employee.find();
-  //   return allEmployee;]
+  // Step 2: Generate random temp password
+  const tempPassword = generateTempPassword(); // returns string like 'a9vks3j2'
 
-  return await Employee.find();
-};
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(tempPassword, 10);
+  } catch (err) {
+    console.error("Failed to hash password:", err.message);
+    throw new Error("Password hashing failed");
+  }
 
-const GetEmployeeByIdService = async (id) => {
-  return await Employee.findById(id);
-};
-
-const UpdateEmployeeService = async (id, updateEmployeeData) => {
-  const employee = await Employee.findByIdAndUpdate(id, updateEmployeeData, {
-    new: true,
+  // Step 3: Create linked User
+  const newUser = new User({
+    name: newUserData.name,
+    email: newUserData.email,
+    password: hashedPassword,
+    role: "employee",
+    employeeId: newEmployee._id,
   });
-  if (!employee) {
-    return "Employee Not Found!";
-  }
-  return employee;
-};
 
-const DeleteEmployeeService = async (id) => {
-  const employee = await Employee.findByIdAndDelete(id);
-  if (!employee) {
-    return "Employee Not Found!";
-  }
-  return employee;
-};
+  try {
+    console.log("Creating user...");
+    await newUser.save();
+    console.log("User created successfully.");
+  } catch (err) {
+    console.error("Failed to create user:", err.message);
 
-const emailExists = async (email) => {
-  const employee = await Employee.findOne({ email });
-  if (employee) {
-    return true;
-  }
-  return false;
-};
+    // Optionally rollback the employee if user creation fails
+    await Employee.findByIdAndDelete(newEmployee._id);
+    console.warn("Rolled back employee record due to user creation failure.");
 
-module.exports = {
-  CreateEmployeeService,
-  GetAllEmployeeService,
-  GetEmployeeByIdService,
-  UpdateEmployeeService,
-  DeleteEmployeeService,
-  emailExists,
+    throw new Error("User creation failed: " + err.message);
+  }
+
+  // Step 4: Return both
+  return {
+    success: true,
+    employee: newEmployee,
+    userInfo: {
+      email: newUser.email,
+      tempPassword,
+    },
+  };
 };

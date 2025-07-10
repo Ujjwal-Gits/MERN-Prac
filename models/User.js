@@ -12,7 +12,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["admin", "manager", "employee"],
     default: "employee",
+  },
+  employeeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Employee",
   }
-}, { timestamps: true });
+}, 
+{ timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);
