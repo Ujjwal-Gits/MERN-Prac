@@ -57,7 +57,20 @@ try {
         });
     };
 
+    const getCurrentUser = async (req, res) => {
+        try {
+            const user = await User.findById(req.user.id).populate("employeeID", "name departmentID").select("-password");
+            if (!user)
+                return res.status(404).json({ message: "User not found" });
+    
+            return res.json({ success: true, user });
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+    };
+
     module.exports = {
         registerUser,
-        loginUser
+        loginUser,
+        getCurrentUser
     };

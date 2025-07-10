@@ -1,25 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const Employee = require("../models/Employee");
 const employeeControllers = require("../controllers/employeeControllers");
 
-const auth = require("../middleware/auth");
 const roleAccess = require("../middleware/role");
-// GET all
-router.get("/", auth, employeeControllers.GetAllEmployeeController);
-// GET by ID
-router.get("/:id", auth, employeeControllers.GetEmployeeByIdController);
+const upload = require("../utils/upload");
+const uploadController = require("../controllers/uploadController");
 
-router.post(
-  "/",
-  roleAccess("admin"),
-  employeeControllers.CreateEmployeeController
-);
+// GET all
+router.get("/", employeeControllers.GetAllEmployeeController);
+// GET by ID
+router.get("/:id", employeeControllers.GetEmployeeByIdController);
 // POST new employee
-router.post("/", employeeControllers.CreateEmployeeController);
+router.post("/", roleAccess("admin"), employeeControllers.CreateEmployeeController);
 // UPDATE existing employee
-router.put("/:id", employeeControllers.UpdateEmployeeController);
+router.put("/:id", roleAccess("admin", "manager"), employeeControllers.UpdateEmployeeController);
 // DELETE existing employee
-router.delete("/:id", employeeControllers.DeleteEmployeeController);
+router.delete("/:id", roleAccess("admin"), employeeControllers.DeleteEmployeeController);
+
+// Upload endpoint
+router.post("/:id/upload-profile", roleAccess("admin", "manager"), upload.single("image"), uploadController);
 
 module.exports = router;
