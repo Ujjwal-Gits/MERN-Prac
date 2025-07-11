@@ -8,10 +8,10 @@ const CreateEmployeeController = async (req, res) => {
     const newEmployee = await employeeServices.CreateEmployeeService(req.body);
     res.status(201).json(newEmployee);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ err: err.message });
   }
 };
-
 
 const GetAllEmployeeController = async (req, res) => {
   try {
